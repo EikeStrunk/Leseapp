@@ -5,26 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Borg Protokoll</title>
     <style>
-        /* --- HINTERGRUND FIX (Aus deinem Code übernommen) --- */
-        body {
-            font-family: 'Courier New', monospace;
-            margin: 0;
-            height: 100vh;
+        /* --- 1. DER HINTERGRUND-LAYER --- */
+        /* Wir lösen den Hintergrund komplett vom Body, das ist am sichersten */
+        #fixed-background {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100vw;
-            overflow: hidden;
+            height: 100vh;
+            z-index: -9999; /* Ganz weit nach hinten */
             
-            /* Das Bild wird direkt dem Body zugewiesen */
-            background: url('borg.png') no-repeat center center fixed;
-            background-size: 120%; /* Dein Zoom-Effekt */
+            /* DEBUG-FARBE: Wenn du ROT siehst, wird das Bild nicht gefunden! */
+            background-color: #550000; 
             
-            color: #C0C0C0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start; 
+            /* Das Bild */
+            background-image: url('borg.png');
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover; /* Füllt den Screen */
         }
 
-        /* --- VIDEO SCREEN --- */
+        /* --- 2. BASIS-LAYOUT --- */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            background-color: transparent; /* WICHTIG: Durchsichtig! */
+            color: #C0C0C0;
+        }
+
+        /* --- 3. VIDEO SCREEN (Leicht durchsichtig) --- */
         #videoIntroScreen {
             position: absolute;
             top: 0;
@@ -35,12 +48,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            /* Leicht transparent, damit man den Borg-Hintergrund erahnen kann */
-            background-color: rgba(0, 0, 0, 0.85);
+            
+            /* Transparenz erhöht: 0.8 statt 0.9, damit man den BG besser sieht */
+            background-color: rgba(0, 0, 0, 0.8); 
+            
             z-index: 100;
             text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
             transition: opacity 0.5s ease-out;
         }
 
@@ -50,7 +63,7 @@
         }
 
         #videoElement {
-            width: 100%;
+            width: 80%;
             max-width: 600px;
             border: 2px solid #00FF00; 
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
@@ -67,9 +80,8 @@
 
         .intro-buttons-container {
             display: flex;
-            flex-direction: column; 
             gap: 15px;
-            width: 80%;
+            margin-top: 10px;
         }
 
         .intro-button {
@@ -84,7 +96,7 @@
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
         }
 
-        /* --- HAUPTBEREICH --- */
+        /* --- 4. HAUPTBEREICH (Wortanzeige) --- */
         #wordDisplayArea {
             display: none; 
             flex-direction: column;
@@ -99,8 +111,7 @@
             position: relative;
             width: 90%;
             height: 50vh; 
-            margin-top: 5vh;
-            
+            margin-top: 10vh; /* Etwas tiefer */
             display: flex;
             justify-content: center; 
             align-items: center;
@@ -124,27 +135,24 @@
             word-wrap: break-word; 
         }
 
-        /* --- FEEDBACK (Haken/Kreuz) --- */
         #initialMessage {
             position: absolute;
-            bottom: 0; 
+            bottom: -20%; 
             width: 100%;
-            font-size: 4rem; 
+            font-size: 1.5rem; 
             text-align: center;
-            padding: 10px;
-            box-sizing: border-box;
-            text-shadow: 0 0 20px rgba(0,0,0,0.8);
-            pointer-events: none; 
+            color: #00FF00;
         }
         
-        .feedback-correct { color: #00FF00; }
-        .feedback-incorrect { color: red; }
+        .feedback-correct { color: #00FF00 !important; }
+        .feedback-incorrect { color: red !important; }
 
-        /* --- BUTTONS UNTEN --- */
+        /* --- 5. BUTTONS UNTEN --- */
         .control-buttons {
             position: absolute; 
-            bottom: 100px; 
+            bottom: 50px; 
             width: 90%;
+            left: 5%;
             display: flex;
             flex-direction: column; 
             gap: 15px;
@@ -176,13 +184,15 @@
     </style>
 </head>
 <body>
-    
+
+    <div id="fixed-background"></div>
+
     <div id="videoIntroScreen">
         <h2>Zielsystem Scan</h2>
         <video id="videoElement" src="your_video.mp4" controls playsinline preload="auto"></video>
         <div class="intro-buttons-container">
-            <button class="intro-button" id="playVideoButton">▶ Video abspielen</button>
-            <button class="intro-button" id="skipToReadButton">⏩ Direkt lesen</button>
+            <button class="intro-button" id="playVideoButton">▶ Video</button>
+            <button class="intro-button" id="skipToReadButton">⏩ Lesen</button>
         </div>
     </div>
 
@@ -224,7 +234,6 @@
         let currentWordIndex = 0;
         let spans = [];
 
-        // --- HELPER (Audio Unlock für iOS) ---
         function unlockAudio() {
             if ('speechSynthesis' in window) {
                 const emptyUtterance = new SpeechSynthesisUtterance("");
@@ -237,7 +246,6 @@
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'de-DE';
-                utterance.rate = 1.0; 
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -288,7 +296,6 @@
         
         recognition = initRecognition();
 
-        // --- CORE LOGIC ---
         function loadWords() {
             currentWordIndex = 0;
             capturedWords = generateCombinedWords(TOTAL_WORDS_COUNT, SENTENCES_REQUIRED);
@@ -324,9 +331,8 @@
                 speakText("Mikrofon Fehler");
                 return;
             }
-            
             readButton.classList.add('recording');
-            readButton.textContent = "⏹ Aufnahme stoppen";
+            readButton.textContent = "⏹ Stopp";
             readButton.disabled = false; 
             startButton.disabled = true;
             nextWordButton.disabled = true; 
@@ -339,10 +345,7 @@
                  readButton.classList.remove('recording');
                  readButton.textContent = "🎤 Laut vorlesen";
                  isRecording = false;
-                 
-                 if (event.error !== 'no-speech') {
-                     initialMessage.textContent = '❌';
-                 }
+                 if (event.error !== 'no-speech') initialMessage.textContent = '❌';
                  if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
             };
             recognition.onend = () => {
@@ -353,9 +356,7 @@
                     if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
                 }
             };
-            
             recognition.start();
-            initialMessage.textContent = '👂'; 
         }
 
         function stopReading() {
@@ -436,21 +437,17 @@
 
         function showNextWord() {
             if (isRecording) stopReading();
-
             if (currentWordIndex > 0) {
                 const prevSpan = spans[currentWordIndex - 1];
                 prevSpan.style.display = 'none'; 
             }
-            
             initialMessage.textContent = ''; 
 
             if (currentWordIndex < capturedWords.length) {
                 const currentSpan = spans[currentWordIndex];
                 currentSpan.style.display = 'block'; 
-                
                 currentWordIndex++; 
                 readButton.disabled = false; 
-                
                 nextWordButton.disabled = false; 
                 nextWordButton.textContent = `Nächstes (${currentWordIndex}/${capturedWords.length})`;
 
@@ -460,38 +457,28 @@
             } else {
                 initialMessage.textContent = '🏁';
                 speakText("Protokoll abgeschlossen.");
-                
                 nextWordButton.textContent = 'Neustart';
                 nextWordButton.removeEventListener('click', showNextWord);
                 nextWordButton.addEventListener('click', restartSequence);
                 nextWordButton.disabled = false; 
-                
                 readButton.disabled = true;
             }
         }
 
-        // --- EVENT LISTENER ---
         playVideoButton.addEventListener('click', () => {
             unlockAudio();
-            videoElement.play().catch(e => {
-                showWordDisplayArea();
-            });
+            videoElement.play().catch(e => showWordDisplayArea());
             playVideoButton.disabled = true;
             videoElement.addEventListener('ended', showWordDisplayArea, { once: true });
         });
 
-        skipToReadButton.addEventListener('click', () => {
-             showWordDisplayArea();
-        });
-
+        skipToReadButton.addEventListener('click', showWordDisplayArea);
         startButton.addEventListener('click', startDisplaySequence);
-        
         readButton.addEventListener('click', () => {
              unlockAudio();
              if (isRecording) stopReading();
              else startReading();
         });
-
     </script>
 </body>
 </html>
