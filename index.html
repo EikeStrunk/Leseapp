@@ -2,11 +2,8 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <title>Lesen-Tab 3 (Mobile Optimized)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Borg Protokoll</title>
     <style>
         body {
             font-family: 'Courier New', monospace;
@@ -14,8 +11,10 @@
             height: 100vh;
             width: 100vw;
             overflow: hidden;
-            background: url('Borg.png') no-repeat center center fixed;
-            background-size: cover; /* Cover ist sicherer für Mobile als feste % */
+            background: url('borg.png') no-repeat center center fixed;
+            /* GEÄNDERT: Zeigt so viel wie möglich vom Bild, ohne zu verzerren */
+            background-size: cover; 
+            background-position: center;
             color: #C0C0C0;
             display: flex;
             flex-direction: column;
@@ -23,7 +22,7 @@
             justify-content: flex-start; 
         }
 
-        /* --- VIDEO SCREEN (Angepasst für Mobile) --- */
+        /* --- VIDEO SCREEN --- */
         #videoIntroScreen {
             position: absolute;
             top: 0;
@@ -58,14 +57,14 @@
 
         #videoIntroScreen h2 {
             color: #00FF00; 
-            font-size: 1.5rem; /* Kleiner für Handy */
+            font-size: 1.5rem; 
             margin-bottom: 20px;
             text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
         }
 
         .intro-buttons-container {
             display: flex;
-            flex-direction: column; /* Buttons untereinander auf Handy */
+            flex-direction: column; 
             gap: 15px;
             width: 80%;
         }
@@ -82,7 +81,7 @@
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
         }
 
-        /* --- WORT ANZEIGE BEREICH --- */
+        /* --- HAUPTBEREICH --- */
         #wordDisplayArea {
             display: none; 
             flex-direction: column;
@@ -95,18 +94,13 @@
         .screen-container {
             position: relative;
             width: 90%;
-            /* Flexibler Platz: Nimmt den Raum zwischen oben und den Buttons */
-            height: 60vh; 
+            height: 50vh; 
             margin-top: 5vh;
             
             display: flex;
             justify-content: center; 
             align-items: center;
             flex-direction: column;
-            
-            /* Auf Mobile keine seitliche Verschiebung mehr, das verwirrt nur */
-            left: 0; 
-            transform: none;
         }
 
         #wordDisplay {
@@ -118,43 +112,38 @@
             font-weight: bold;
             text-shadow: 0 0 10px rgba(0, 255, 0, 0.8), 0 0 5px black;
             text-align: center;
-            opacity: 0;
-            transition: opacity 0.5s;
         }
 
         #wordDisplay span {
-            display: block;
+            display: none; /* Alle Wörter standardmäßig ausblenden */
             width: 100%;
-            word-wrap: break-word; /* Verhindert Abschneiden langer Wörter */
+            word-wrap: break-word; 
         }
 
-        /* --- FEEDBACK MELDUNG --- */
+        /* --- FEEDBACK (Haken/Kreuz) --- */
         #initialMessage {
             position: absolute;
-            bottom: 0; /* Klebt am unteren Rand des Containers */
+            /* Positioniert zwischen Wort und Buttons */
+            bottom: 0; 
             width: 100%;
-            font-size: 1.2rem; /* Lesbare Größe auf Mobile */
-            color: #00FF00; 
-            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            /* GEÄNDERT: Sehr große Schrift für Emojis */
+            font-size: 4rem; 
             text-align: center;
             padding: 10px;
             box-sizing: border-box;
+            text-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
-        
-        .feedback-correct { color: limegreen !important; text-shadow: 0 0 10px limegreen; }
-        .feedback-incorrect { color: red !important; text-shadow: 0 0 10px red; }
 
         /* --- BUTTONS UNTEN --- */
         .control-buttons {
-            position: absolute; /* Absolute statt Fixed verhindert Überlagerungsprobleme bei kleinen Screens */
-            bottom: 30px; 
+            position: absolute; 
+            /* GEÄNDERT: Deutlich mehr Abstand nach unten für iPhone Home-Bar */
+            bottom: 100px; 
             width: 90%;
             display: flex;
-            flex-direction: column; /* Untereinander stapeln auf Handy */
+            flex-direction: column; 
             gap: 15px;
             z-index: 50; 
-            opacity: 0; 
-            transition: opacity 0.5s;
         }
         
         .control-buttons button {
@@ -166,7 +155,7 @@
             cursor: pointer;
             font-weight: bold;
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.7); 
-            width: 100%; /* Volle Breite */
+            width: 100%; 
         }
         
         #startButton, #nextWordButton { background-color: #00FF00; }
@@ -185,7 +174,7 @@
     
     <div id="videoIntroScreen">
         <h2>Zielsystem Scan</h2>
-        <video id="videoElement" src="your_video.MP4" controls playsinline preload="auto"></video>
+        <video id="videoElement" src="your_video.mp4" controls playsinline preload="auto"></video>
         <div class="intro-buttons-container">
             <button class="intro-button" id="playVideoButton">▶ Video abspielen</button>
             <button class="intro-button" id="skipToReadButton">⏩ Direkt lesen</button>
@@ -206,7 +195,6 @@
     </div>
 
     <script>
-        // --- Referenzen ---
         const videoIntroScreen = document.getElementById('videoIntroScreen');
         const videoElement = document.getElementById('videoElement');
         const playVideoButton = document.getElementById('playVideoButton');
@@ -214,7 +202,6 @@
         const wordDisplayArea = document.getElementById('wordDisplayArea');
         const wordDisplay = document.getElementById('wordDisplay');
         const initialMessage = document.getElementById('initialMessage');
-        const fixedControlButtons = document.getElementById('fixedControlButtons');
         const startButton = document.getElementById('startButton');
         const nextWordButton = document.getElementById('nextWordButton');
         const readButton = document.getElementById('readButton');
@@ -227,13 +214,21 @@
         const WORD_POOL_SENTENCES = ["Die Galaxie dreht sich schnell.", "Der Komet kommt näher.", "Warte auf das Signal.", "Das Schiff driftet ab.", "Tausend Sterne warten.", "Wir sind nicht allein.", "Der Flug ist vorbei.", "Aktiviere den Hyperraum.", "Das Vakuum ist kalt.", "Mars ist unser Ziel.", "Der nächste Schritt beginnt.", "Sei bereit für den Sprung."];
         const SENTENCES_REQUIRED = 3;
         const TOTAL_WORDS_COUNT = 10;
-        const MAX_WORD_LENGTH = 30; 
         
         let capturedWords = [];
         let currentWordIndex = 0;
         let spans = [];
 
         // --- HELPER ---
+        function speakText(text) {
+            // Funktion für Sprachausgabe
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'de-DE';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -262,14 +257,11 @@
             return shuffleArray(result);
         }
 
-        // --- Responsive Schriftgröße ---
         function calculateFontSize(text) {
             const length = text.length;
-            // Auf dem Handy brauchen wir kleinere Schriften als auf dem Desktop
-            // Wir nutzen 'vw' (Viewport Width), damit es sich der Breite anpasst
-            if (length <= 7) return '15vw'; // Sehr groß für kurze Wörter
+            if (length <= 7) return '15vw'; 
             if (length <= 15) return '10vw';
-            return '6vw'; // Kleiner für Sätze
+            return '6vw'; 
         }
 
         function initRecognition() {
@@ -294,31 +286,29 @@
                     const span = document.createElement('span');
                     span.textContent = word;
                     span.style.fontSize = calculateFontSize(word); 
-                    // Initiale Unsichtbarkeit
                     span.style.display = 'none'; 
                     wordDisplay.appendChild(span);
                 });
                 spans = wordDisplay.querySelectorAll('span');
 
-                initialMessage.textContent = 'Bereit zur Anzeige der 10 Worte.';
-                initialMessage.classList.remove('feedback-correct', 'feedback-incorrect');
+                initialMessage.textContent = ''; // Leer am Anfang
                 
                 startButton.disabled = false;
                 readButton.disabled = true; 
+                
                 nextWordButton.textContent = 'Nächstes Wort (0/10)';
                 nextWordButton.removeEventListener('click', restartSequence);
                 nextWordButton.addEventListener('click', showNextWord);
+                nextWordButton.disabled = true; // Erst aktiv nach Start
             } else {
-                initialMessage.textContent = 'Fehler: Liste konnte nicht generiert werden.';
-                startButton.disabled = true;
+                initialMessage.textContent = 'Fehler beim Laden.';
             }
         }
 
         function startReading() {
             if (!recognition) {
-                initialMessage.textContent = 'Fehler: Mikrofon nicht verfügbar.';
-                initialMessage.classList.add('feedback-incorrect');
-                initialMessage.style.display = 'block';
+                initialMessage.textContent = '❌';
+                speakText("Mikrofon Fehler");
                 return;
             }
             
@@ -328,6 +318,7 @@
             startButton.disabled = true;
             nextWordButton.disabled = true; 
             isRecording = true;
+            initialMessage.textContent = '👂'; // Ohr-Symbol für "Zuhören"
             
             recognition.onresult = checkReading;
             recognition.onerror = (event) => {
@@ -336,15 +327,13 @@
                  isRecording = false;
                  
                  if (event.error !== 'no-speech') {
-                     initialMessage.textContent = `❌ Fehler: ${event.error}`;
-                     initialMessage.classList.add('feedback-incorrect');
-                     initialMessage.style.display = 'block';
+                     initialMessage.textContent = '❌';
+                     speakText("Fehler");
                  }
-                 // Fehler beim Aufnehmen -> trotzdem weiter erlauben
                  if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
             };
             recognition.onend = () => {
-                if(isRecording) { // Falls es von selbst gestoppt hat
+                if(isRecording) { 
                     readButton.classList.remove('recording');
                     readButton.textContent = "🎤 Laut vorlesen";
                     isRecording = false;
@@ -352,7 +341,6 @@
             };
             
             recognition.start();
-            initialMessage.style.display = 'none';
         }
 
         function stopReading() {
@@ -383,27 +371,27 @@
             else if (currentTargetWord.length > 0 && recognizedText.includes(currentTargetWord.substring(0, 4))) isCorrect = true;
             else if (recognizedText.length > 0 && currentTargetWord.includes(recognizedText)) isCorrect = true;
 
-            currentSpan.classList.remove('correct', 'incorrect');
-            initialMessage.classList.remove('feedback-correct', 'feedback-incorrect');
-
             if (isCorrect) {
-                currentSpan.classList.add('correct');
-                initialMessage.textContent = "✅ Richtig gelesen!";
-                initialMessage.classList.add('feedback-correct');
+                initialMessage.textContent = "✅";
+                speakText("Richtig!");
             } else {
-                currentSpan.classList.add('incorrect');
-                initialMessage.textContent = `❌ Erkannt: "${recognizedText}"`;
-                initialMessage.classList.add('feedback-incorrect');
+                initialMessage.textContent = "❌";
+                speakText("Leider falsch.");
             }
-            initialMessage.style.display = 'block';
-
+            
+            // Reaktiviert den Weiter-Button
             if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false; 
         }
 
         function restartSequence() {
-            initialMessage.style.display = 'block';
-            wordDisplay.style.opacity = 0;
+            initialMessage.textContent = '';
             loadWords(); 
+            // Nach Neustart direkt das erste Wort anzeigen?
+            // Nein, Logik verlangt erneuten Klick auf Start oder manuelle Steuerung.
+            // Um Konsistenz zu wahren, setzen wir den UI Status zurück.
+            startButton.disabled = false;
+            startButton.style.display = 'block'; // Falls ausgeblendet
+            nextWordButton.disabled = true;
         }
 
         function showWordDisplayArea() {
@@ -413,15 +401,13 @@
             }, { once: true });
             
             wordDisplayArea.style.display = 'flex'; 
-            fixedControlButtons.style.opacity = 1; 
             loadWords(); 
         }
 
         function startDisplaySequence() {
             startButton.disabled = true;
+            startButton.style.display = 'none'; // Button weg, um Platz zu sparen
             readButton.disabled = false; 
-            initialMessage.style.display = 'none'; 
-            wordDisplay.style.opacity = 1; 
             showNextWord();
         }
 
@@ -430,16 +416,14 @@
 
             if (currentWordIndex > 0) {
                 const prevSpan = spans[currentWordIndex - 1];
-                prevSpan.style.display = 'none'; // Vorheriges Wort ganz weg
-                prevSpan.classList.remove('correct', 'incorrect');
+                prevSpan.style.display = 'none'; 
             }
             
-            initialMessage.classList.remove('feedback-correct', 'feedback-incorrect');
-            initialMessage.style.display = 'none';
+            initialMessage.textContent = ''; // Feedback leeren
 
             if (currentWordIndex < capturedWords.length) {
                 const currentSpan = spans[currentWordIndex];
-                currentSpan.style.display = 'block'; // Aktuelles Wort anzeigen
+                currentSpan.style.display = 'block'; 
                 
                 currentWordIndex++; 
                 readButton.disabled = false; 
@@ -447,29 +431,25 @@
                 nextWordButton.textContent = `Nächstes (${currentWordIndex}/${capturedWords.length})`;
 
                 if (currentWordIndex === capturedWords.length) {
-                    nextWordButton.textContent = 'Beenden';
-                    setTimeout(() => {
-                        if (nextWordButton.textContent === 'Beenden') nextWordButton.disabled = true;
-                    }, 100); 
+                    nextWordButton.textContent = 'Fertig';
                 }
             } else {
                 // Sequenz Ende
-                initialMessage.textContent = 'Protokoll abgeschlossen.';
-                initialMessage.style.display = 'block';
-                nextWordButton.textContent = 'Neu starten';
+                initialMessage.textContent = '🏁';
+                speakText("Protokoll abgeschlossen.");
+                
+                nextWordButton.textContent = 'Neustart';
                 nextWordButton.removeEventListener('click', showNextWord);
                 nextWordButton.addEventListener('click', restartSequence);
                 nextWordButton.disabled = false;
+                
                 readButton.disabled = true;
             }
         }
 
-        // --- Event Listener ---
+        // --- EVENT LISTENER ---
         playVideoButton.addEventListener('click', () => {
-            // WICHTIG: User Interaction nötig für Audio auf iOS
             videoElement.play().catch(e => {
-                // Falls Autoplay fehlschlägt (selten bei Click), zeige Direkt-Button
-                console.log("Play failed, switching to read mode");
                 showWordDisplayArea();
             });
             playVideoButton.disabled = true;
@@ -492,5 +472,3 @@
     </script>
 </body>
 </html>
-
-
