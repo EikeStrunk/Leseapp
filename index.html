@@ -5,32 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Borg Protokoll</title>
     <style>
-        /* --- HINTERGRUND FIX --- */
-        /* Wir nehmen den Hintergrund aus dem Body raus und geben ihm ein eigenes Element */
+        /* --- GRUNDLAGEN & HINTERGRUND FIX --- */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            /* WICHTIG: Transparent, damit der #bg-layer darunter zu sehen ist */
+            background-color: transparent; 
+            color: #C0C0C0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; 
+        }
+
         #bg-layer {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
+            /* Stelle sicher, dass borg.png im selben Ordner liegt */
             background: url('borg.png') no-repeat center center;
             background-size: cover;
-            z-index: -1; /* Zwingend ganz nach hinten */
+            z-index: -1; /* Liegt hinter dem Body */
             pointer-events: none;
-        }
-
-        body {
-            font-family: 'Courier New', monospace;
-            margin: 0;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            /* Hintergrund hier entfernt, siehe #bg-layer */
-            color: #C0C0C0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start; 
         }
 
         /* --- VIDEO SCREEN --- */
@@ -44,7 +46,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background-color: rgba(0, 0, 0, 0.95);
+            /* Leicht transparent (0.85 statt 0.95), damit man den BG erahnen kann */
+            background-color: rgba(0, 0, 0, 0.85);
             z-index: 100;
             text-align: center;
             padding: 20px;
@@ -100,7 +103,7 @@
             width: 100%;
             height: 100%;
             position: relative;
-            z-index: 10; /* Sicherstellen, dass Inhalt über dem BG liegt */
+            z-index: 10; 
         }
 
         .screen-container {
@@ -119,7 +122,7 @@
             width: 100%;
             display: flex;
             justify-content: center; 
-            align-items: center;    
+            align-items: center;     
             color: #00FF00; 
             font-weight: bold;
             text-shadow: 0 0 10px rgba(0, 255, 0, 0.8), 0 0 5px black;
@@ -127,7 +130,7 @@
         }
 
         #wordDisplay span {
-            display: none; /* Alle Wörter standardmäßig ausblenden */
+            display: none; 
             width: 100%;
             word-wrap: break-word; 
         }
@@ -142,7 +145,7 @@
             padding: 10px;
             box-sizing: border-box;
             text-shadow: 0 0 20px rgba(0,0,0,0.8);
-            pointer-events: none; /* Klicks gehen durch */
+            pointer-events: none; 
         }
 
         /* --- BUTTONS UNTEN --- */
@@ -233,22 +236,20 @@
 
         // --- HELPER ---
 
-        // NEU: Audio "aufwärmen" für iOS
+        // Audio "aufwärmen" für iOS
         function unlockAudio() {
             if ('speechSynthesis' in window) {
                 const emptyUtterance = new SpeechSynthesisUtterance("");
                 window.speechSynthesis.speak(emptyUtterance);
-                console.log("Audio Unlocked for iOS");
             }
         }
 
         function speakText(text) {
             if ('speechSynthesis' in window) {
-                // Audio Feedback abbrechen, falls noch etwas spricht
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'de-DE';
-                utterance.rate = 1.0; // Normale Geschwindigkeit
+                utterance.rate = 1.0; 
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -355,7 +356,6 @@
                  if (event.error !== 'no-speech') {
                      initialMessage.textContent = '❌';
                  }
-                 // Fehler -> Button wieder freigeben
                  if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
             };
             recognition.onend = () => {
@@ -363,13 +363,12 @@
                     readButton.classList.remove('recording');
                     readButton.textContent = "🎤 Laut vorlesen";
                     isRecording = false;
-                    // Falls Aufnahme endet ohne Ergebnis, Button freigeben
                     if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
                 }
             };
             
             recognition.start();
-            initialMessage.textContent = '👂'; // Visuelles Signal
+            initialMessage.textContent = '👂'; 
         }
 
         function stopReading() {
@@ -404,7 +403,6 @@
             currentSpan.classList.remove('correct', 'incorrect');
             initialMessage.classList.remove('feedback-correct', 'feedback-incorrect');
 
-            // Hier wird die Sprachausgabe ausgelöst (funktioniert nur, wenn vorher unlockAudio lief)
             if (isCorrect) {
                 initialMessage.textContent = "✅";
                 speakText("Richtig!");
@@ -429,9 +427,7 @@
         }
 
         function showWordDisplayArea() {
-            // FIX: Hier Audio für iOS freischalten, da dies ein User-Klick ist
             unlockAudio();
-
             videoElement.pause();
             
             videoIntroScreen.classList.add('hidden');
@@ -444,9 +440,7 @@
         }
 
         function startDisplaySequence() {
-            // FIX: Hier sicherheitshalber nochmal Audio freischalten
             unlockAudio();
-
             startButton.disabled = true;
             startButton.style.display = 'none'; 
             readButton.disabled = false; 
@@ -491,7 +485,6 @@
 
         // --- EVENT LISTENER ---
         playVideoButton.addEventListener('click', () => {
-            // Auch hier Audio Unlock
             unlockAudio();
             videoElement.play().catch(e => {
                 showWordDisplayArea();
@@ -507,7 +500,6 @@
         startButton.addEventListener('click', startDisplaySequence);
         
         readButton.addEventListener('click', () => {
-             // Letzter Check auf Audio Unlock, falls User sehr schnell war
              unlockAudio();
              if (isRecording) stopReading();
              else startReading();
