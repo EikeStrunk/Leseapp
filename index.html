@@ -5,34 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Borg Protokoll</title>
     <style>
-        /* --- GRUNDLAGEN & HINTERGRUND FIX --- */
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+        /* --- HINTERGRUND FIX (Aus deinem Code übernommen) --- */
+        body {
             font-family: 'Courier New', monospace;
-            /* WICHTIG: Transparent, damit der #bg-layer darunter zu sehen ist */
-            background-color: transparent; 
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            
+            /* Das Bild wird direkt dem Body zugewiesen */
+            background: url('borg.png') no-repeat center center fixed;
+            background-size: 120%; /* Dein Zoom-Effekt */
+            
             color: #C0C0C0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start; 
-        }
-
-        #bg-layer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            /* Stelle sicher, dass borg.png im selben Ordner liegt */
-            background: url('borg.png') no-repeat center center;
-            background-size: cover;
-            z-index: -1; /* Liegt hinter dem Body */
-            pointer-events: none;
         }
 
         /* --- VIDEO SCREEN --- */
@@ -46,7 +35,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            /* Leicht transparent (0.85 statt 0.95), damit man den BG erahnen kann */
+            /* Leicht transparent, damit man den Borg-Hintergrund erahnen kann */
             background-color: rgba(0, 0, 0, 0.85);
             z-index: 100;
             text-align: center;
@@ -147,6 +136,9 @@
             text-shadow: 0 0 20px rgba(0,0,0,0.8);
             pointer-events: none; 
         }
+        
+        .feedback-correct { color: #00FF00; }
+        .feedback-incorrect { color: red; }
 
         /* --- BUTTONS UNTEN --- */
         .control-buttons {
@@ -185,8 +177,6 @@
 </head>
 <body>
     
-    <div id="bg-layer"></div>
-
     <div id="videoIntroScreen">
         <h2>Zielsystem Scan</h2>
         <video id="videoElement" src="your_video.mp4" controls playsinline preload="auto"></video>
@@ -234,9 +224,7 @@
         let currentWordIndex = 0;
         let spans = [];
 
-        // --- HELPER ---
-
-        // Audio "aufwärmen" für iOS
+        // --- HELPER (Audio Unlock für iOS) ---
         function unlockAudio() {
             if ('speechSynthesis' in window) {
                 const emptyUtterance = new SpeechSynthesisUtterance("");
@@ -341,7 +329,6 @@
             readButton.textContent = "⏹ Aufnahme stoppen";
             readButton.disabled = false; 
             startButton.disabled = true;
-            
             nextWordButton.disabled = true; 
             
             isRecording = true;
