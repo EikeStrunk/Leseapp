@@ -5,39 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Borg Protokoll</title>
     <style>
-        /* --- 1. DER HINTERGRUND-LAYER --- */
-        /* Wir lösen den Hintergrund komplett vom Body, das ist am sichersten */
-        #fixed-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -9999; /* Ganz weit nach hinten */
-            
-            /* DEBUG-FARBE: Wenn du ROT siehst, wird das Bild nicht gefunden! */
-            background-color: #550000; 
-            
-            /* Das Bild */
-            background-image: url('./Borg.png');
-            background-repeat: no-repeat;
-            background-position: center center;
-            background-size: cover; /* Füllt den Screen */
-        }
-
-        /* --- 2. BASIS-LAYOUT --- */
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+        /* --- GRUNDLAGEN & HINTERGRUND FIX --- */
+        body {
             font-family: 'Courier New', monospace;
-            background-color: transparent; /* WICHTIG: Durchsichtig! */
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            
+            /* ÄNDERUNG 1: Dateiname angepasst (Borg.png) und schwarzer Hintergrund als Fallback */
+            background: black url('Borg.png') no-repeat center center fixed;
+            
+            /* ÄNDERUNG 2: Rauszoomen auf 80% der Bildschirmgröße */
+            background-size: 80%;
+            
             color: #C0C0C0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; 
         }
 
-        /* --- 3. VIDEO SCREEN (Leicht durchsichtig) --- */
+        /* --- VIDEO SCREEN --- */
         #videoIntroScreen {
             position: absolute;
             top: 0;
@@ -48,12 +37,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            
-            /* Transparenz erhöht: 0.8 statt 0.9, damit man den BG besser sieht */
-            background-color: rgba(0, 0, 0, 0.8); 
-            
+            /* Leicht transparent, damit man den Borg-Hintergrund erahnen kann */
+            background-color: rgba(0, 0, 0, 0.85);
             z-index: 100;
             text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
             transition: opacity 0.5s ease-out;
         }
 
@@ -63,7 +52,7 @@
         }
 
         #videoElement {
-            width: 80%;
+            width: 100%;
             max-width: 600px;
             border: 2px solid #00FF00; 
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
@@ -80,8 +69,9 @@
 
         .intro-buttons-container {
             display: flex;
+            flex-direction: column; 
             gap: 15px;
-            margin-top: 10px;
+            width: 80%;
         }
 
         .intro-button {
@@ -96,7 +86,7 @@
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
         }
 
-        /* --- 4. HAUPTBEREICH (Wortanzeige) --- */
+        /* --- HAUPTBEREICH --- */
         #wordDisplayArea {
             display: none; 
             flex-direction: column;
@@ -111,7 +101,8 @@
             position: relative;
             width: 90%;
             height: 50vh; 
-            margin-top: 10vh; /* Etwas tiefer */
+            margin-top: 5vh;
+            
             display: flex;
             justify-content: center; 
             align-items: center;
@@ -135,24 +126,28 @@
             word-wrap: break-word; 
         }
 
+        /* --- FEEDBACK (Haken/Kreuz) --- */
         #initialMessage {
             position: absolute;
-            bottom: -20%; 
+            /* ÄNDERUNG 3: Nach oben verschoben, damit es nicht von Buttons verdeckt wird */
+            bottom: 250px; 
             width: 100%;
-            font-size: 1.5rem; 
+            font-size: 4rem; 
             text-align: center;
-            color: #00FF00;
+            padding: 10px;
+            box-sizing: border-box;
+            text-shadow: 0 0 20px rgba(0,0,0,0.8);
+            pointer-events: none; 
         }
         
-        .feedback-correct { color: #00FF00 !important; }
-        .feedback-incorrect { color: red !important; }
+        .feedback-correct { color: #00FF00; }
+        .feedback-incorrect { color: red; }
 
-        /* --- 5. BUTTONS UNTEN --- */
+        /* --- BUTTONS UNTEN --- */
         .control-buttons {
             position: absolute; 
-            bottom: 50px; 
+            bottom: 100px; 
             width: 90%;
-            left: 5%;
             display: flex;
             flex-direction: column; 
             gap: 15px;
@@ -184,15 +179,13 @@
     </style>
 </head>
 <body>
-
-    <div id="fixed-background"></div>
-
+    
     <div id="videoIntroScreen">
         <h2>Zielsystem Scan</h2>
         <video id="videoElement" src="your_video.mp4" controls playsinline preload="auto"></video>
         <div class="intro-buttons-container">
-            <button class="intro-button" id="playVideoButton">▶ Video</button>
-            <button class="intro-button" id="skipToReadButton">⏩ Lesen</button>
+            <button class="intro-button" id="playVideoButton">▶ Video abspielen</button>
+            <button class="intro-button" id="skipToReadButton">⏩ Direkt lesen</button>
         </div>
     </div>
 
@@ -234,6 +227,7 @@
         let currentWordIndex = 0;
         let spans = [];
 
+        // --- HELPER ---
         function unlockAudio() {
             if ('speechSynthesis' in window) {
                 const emptyUtterance = new SpeechSynthesisUtterance("");
@@ -246,6 +240,7 @@
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'de-DE';
+                utterance.rate = 1.0; 
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -296,6 +291,7 @@
         
         recognition = initRecognition();
 
+        // --- CORE LOGIC ---
         function loadWords() {
             currentWordIndex = 0;
             capturedWords = generateCombinedWords(TOTAL_WORDS_COUNT, SENTENCES_REQUIRED);
@@ -331,8 +327,9 @@
                 speakText("Mikrofon Fehler");
                 return;
             }
+            
             readButton.classList.add('recording');
-            readButton.textContent = "⏹ Stopp";
+            readButton.textContent = "⏹ Aufnahme stoppen";
             readButton.disabled = false; 
             startButton.disabled = true;
             nextWordButton.disabled = true; 
@@ -356,7 +353,9 @@
                     if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
                 }
             };
+            
             recognition.start();
+            initialMessage.textContent = '👂'; 
         }
 
         function stopReading() {
@@ -465,24 +464,28 @@
             }
         }
 
+        // --- EVENT LISTENER ---
         playVideoButton.addEventListener('click', () => {
             unlockAudio();
-            videoElement.play().catch(e => showWordDisplayArea());
+            videoElement.play().catch(e => {
+                showWordDisplayArea();
+            });
             playVideoButton.disabled = true;
             videoElement.addEventListener('ended', showWordDisplayArea, { once: true });
         });
 
-        skipToReadButton.addEventListener('click', showWordDisplayArea);
+        skipToReadButton.addEventListener('click', () => {
+             showWordDisplayArea();
+        });
+
         startButton.addEventListener('click', startDisplaySequence);
+        
         readButton.addEventListener('click', () => {
              unlockAudio();
              if (isRecording) stopReading();
              else startReading();
         });
+
     </script>
 </body>
 </html>
-
-
-
-
