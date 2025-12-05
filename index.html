@@ -2,10 +2,9 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lesen-Tab 3 (Borg-Protokoll)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Borg Protokoll</title>
     <style>
-        /* --- GRUNDDESIGN: BORG-ÄSTHETIK (Dunkel, Grün) --- */
         body {
             font-family: 'Courier New', monospace;
             margin: 0;
@@ -13,17 +12,17 @@
             width: 100vw;
             overflow: hidden;
             background: url('borg.png') no-repeat center center fixed;
+            /* GEÄNDERT: Zeigt so viel wie möglich vom Bild, ohne zu verzerren */
+            background-size: cover; 
+            background-position: center;
             color: #C0C0C0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start; 
-            padding-top: 5vh;
-            
-            background-size: 120%; 
         }
 
-        /* --- STYLES FÜR DEN VIDEO-STARTBILDSCHIRM (unverändert) --- */
+        /* --- VIDEO SCREEN --- */
         #videoIntroScreen {
             position: absolute;
             top: 0;
@@ -34,11 +33,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background-color: rgba(0, 0, 0, 0.9);
+            background-color: rgba(0, 0, 0, 0.95);
             z-index: 100;
             text-align: center;
-            opacity: 1;
-            transition: opacity 1s ease-out;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: opacity 0.5s ease-out;
         }
 
         #videoIntroScreen.hidden {
@@ -47,196 +47,154 @@
         }
 
         #videoElement {
-            width: 80%;
-            max-width: 900px;
+            width: 100%;
+            max-width: 600px;
             border: 2px solid #00FF00; 
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
-            margin-bottom: 30px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+            margin-bottom: 20px;
+            border-radius: 8px;
         }
 
         #videoIntroScreen h2 {
             color: #00FF00; 
-            font-size: 2.5rem;
-            text-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
-            margin-bottom: 30px;
+            font-size: 1.5rem; 
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
         }
 
         .intro-buttons-container {
             display: flex;
-            gap: 30px;
+            flex-direction: column; 
+            gap: 15px;
+            width: 80%;
         }
 
         .intro-button {
-            padding: 18px 40px;
-            font-size: 1.4rem;
+            padding: 15px;
+            font-size: 1.1rem;
             color: black;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             background-color: #00FF00; 
-            box-shadow: 0 0 18px rgba(0, 255, 0, 0.9);
-            transition: background-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
         }
 
-        .intro-button:hover {
-            background-color: #39FF14;
-            box-shadow: 0 0 25px rgba(0, 255, 0, 1);
-        }
-
-        /* --- STYLES FÜR DEN WORT-ANZEIGE-MODUS --- */
-
+        /* --- HAUPTBEREICH --- */
         #wordDisplayArea {
             display: none; 
             flex-direction: column;
             align-items: center;
             width: 100%;
             height: 100%;
+            position: relative;
         }
 
         .screen-container {
-            position: absolute; 
-            width: 90%; 
+            position: relative;
+            width: 90%;
             height: 50vh; 
-            top: 15vh; 
-            
-            background-color: transparent; 
-            border: none;
-            box-shadow: none; 
+            margin-top: 5vh;
             
             display: flex;
             justify-content: center; 
             align-items: center;
             flex-direction: column;
-
-            left: 55%; 
-            transform: translateX(-50%); 
         }
 
         #wordDisplay {
             width: 100%;
-            height: 100%;
             display: flex;
             justify-content: center; 
             align-items: center;    
-            
             color: #00FF00; 
-            font-size: 5rem; 
             font-weight: bold;
-            text-shadow: 0 0 15px rgba(0, 255, 0, 0.9), 0 0 5px black;
-            
-            opacity: 0;
-            transition: opacity 0.5s;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.8), 0 0 5px black;
+            text-align: center;
         }
 
         #wordDisplay span {
-            position: absolute; 
-            display: block;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-            text-align: center;
-            padding: 0 5vw; 
-            border-bottom: 5px solid transparent; 
-            padding-bottom: 5px;
+            display: none; /* Alle Wörter standardmäßig ausblenden */
+            width: 100%;
+            word-wrap: break-word; 
         }
-        .correct { border-bottom-color: limegreen !important; }
-        .incorrect { border-bottom-color: red !important; }
 
-        /* GEÄNDERT: Platzierung und Größe der Erfolgsmeldung */
+        /* --- FEEDBACK (Haken/Kreuz) --- */
         #initialMessage {
-            position: absolute; 
-            /* Größere Schrift */
-            font-size: 2rem; 
-            /* Positioniert 15% vom unteren Rand des screen-container (unter den Wörtern) */
-            bottom: 15%; 
-            color: #00FF00; 
-            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            position: absolute;
+            /* Positioniert zwischen Wort und Buttons */
+            bottom: 0; 
+            width: 100%;
+            /* GEÄNDERT: Sehr große Schrift für Emojis */
+            font-size: 4rem; 
             text-align: center;
-        }
-        
-        .feedback-correct { 
-            color: limegreen !important;
-            text-shadow: 0 0 10px limegreen;
-        }
-        .feedback-incorrect { 
-            color: red !important;
-            text-shadow: 0 0 10px red;
+            padding: 10px;
+            box-sizing: border-box;
+            text-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
 
+        /* --- BUTTONS UNTEN --- */
         .control-buttons {
-            position: fixed; 
-            bottom: 30px; 
-            left: 50%;
-            transform: translateX(-50%); 
+            position: absolute; 
+            /* GEÄNDERT: Deutlich mehr Abstand nach unten für iPhone Home-Bar */
+            bottom: 100px; 
+            width: 90%;
             display: flex;
-            gap: 20px;
+            flex-direction: column; 
+            gap: 15px;
             z-index: 50; 
-            opacity: 0; 
-            transition: opacity 0.5s;
         }
         
         .control-buttons button {
-            padding: 15px 30px;
-            font-size: 1.2rem;
+            padding: 15px;
+            font-size: 1.1rem;
             color: black;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7); 
-            transition: background-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.7); 
+            width: 100%; 
         }
         
-        #startButton, #nextWordButton {
-            background-color: #00FF00;
+        #startButton, #nextWordButton { background-color: #00FF00; }
+        #readButton { background-color: #00FF00; }
+        #readButton.recording { background-color: red; box-shadow: 0 0 15px red; color: white;}
+
+        button:disabled {
+            background-color: #444 !important;
+            color: #888 !important;
+            box-shadow: none !important;
         }
 
-        #startButton:hover, #nextWordButton:hover {
-            background-color: #39FF14;
-        }
-
-        .control-buttons button:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-            box-shadow: none;
-            color: #ccc;
-        }
-
-        #readButton.recording {
-            background-color: red;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
-        }
     </style>
 </head>
 <body>
     
     <div id="videoIntroScreen">
-        <h2 style="color: #00FF00;">Vorbereitung zur Konvergenz: Zielsystem Scan</h2>
-        <video id="videoElement" src="your_video.mp4" controls preload="auto"></video>
+        <h2>Zielsystem Scan</h2>
+        <video id="videoElement" src="your_video.mp4" controls playsinline preload="auto"></video>
         <div class="intro-buttons-container">
-            <button class="intro-button" id="playVideoButton">Video abspielen</button>
-            <button class="intro-button" id="skipToReadButton">Direkt lesen</button>
+            <button class="intro-button" id="playVideoButton">▶ Video abspielen</button>
+            <button class="intro-button" id="skipToReadButton">⏩ Direkt lesen</button>
         </div>
     </div>
 
-    <div id="wordDisplayArea" style="display: none;">
+    <div id="wordDisplayArea">
         <div class="screen-container">
             <div id="wordDisplay"></div>
-            <p id="initialMessage">Datenpaket wird generiert...</p>
+            <p id="initialMessage">Initialisiere...</p>
+        </div>
+        
+        <div class="control-buttons" id="fixedControlButtons">
+            <button id="startButton" disabled>Ich bin bereit</button>
+            <button id="readButton" disabled>🎤 Laut vorlesen</button>
+            <button id="nextWordButton" disabled>Nächstes Wort (0/10)</button> 
         </div>
     </div>
-    
-    <div class="control-buttons" id="fixedControlButtons">
-        <button id="startButton" disabled>Ich bin bereit</button>
-        
-        <button id="readButton" disabled>Ich lese laut vor. War das richtig?</button>
-        
-        <button id="nextWordButton" disabled>Nächstes Wort (0/10)</button> 
-    </div>
-
 
     <script>
-        // --- Referenzen ---
         const videoIntroScreen = document.getElementById('videoIntroScreen');
         const videoElement = document.getElementById('videoElement');
         const playVideoButton = document.getElementById('playVideoButton');
@@ -244,28 +202,32 @@
         const wordDisplayArea = document.getElementById('wordDisplayArea');
         const wordDisplay = document.getElementById('wordDisplay');
         const initialMessage = document.getElementById('initialMessage');
-        const fixedControlButtons = document.getElementById('fixedControlButtons');
         const startButton = document.getElementById('startButton');
         const nextWordButton = document.getElementById('nextWordButton');
         const readButton = document.getElementById('readButton');
         
-        // --- API & GLOBALE ZUSTÄNDE ---
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
         let isRecording = false;
 
-        // --- POOL AUFGETEILT IN WÖRTER UND SÄTZE ---
         const WORD_POOL_WORDS = ["Kosmos", "Saturn", "Orbit", "Galaxie", "Nebel", "Astral", "Plasma", "Gravit", "Titan", "Komet", "Mond", "Sonne", "Venus", "Mars", "Alpha", "Stern", "Vakuum", "Raum", "Start", "Pilot", "Laser", "Hyper", "Terra", "Nova", "Licht", "Staub", "Schiff", "Ferne", "Spion", "Quasar", "Ringe", "Astro", "Blitz", "Himmel", "Aura", "Erde", "Gürtel", "Chaos", "Glimmer", "Träger", "Sonden", "Dunkel", "Weiten", "Faktor", "Reaktor", "Jupyter", "Signal", "Welle", "Meter"];
         const WORD_POOL_SENTENCES = ["Die Galaxie dreht sich schnell.", "Der Komet kommt näher.", "Warte auf das Signal.", "Das Schiff driftet ab.", "Tausend Sterne warten.", "Wir sind nicht allein.", "Der Flug ist vorbei.", "Aktiviere den Hyperraum.", "Das Vakuum ist kalt.", "Mars ist unser Ziel.", "Der nächste Schritt beginnt.", "Sei bereit für den Sprung."];
         const SENTENCES_REQUIRED = 3;
         const TOTAL_WORDS_COUNT = 10;
-        const MAX_WORD_LENGTH = 30; 
         
         let capturedWords = [];
         let currentWordIndex = 0;
         let spans = [];
 
-        // --- FUNKTIONEN FÜR DATEN & ZUFALL (unverändert) ---
+        // --- HELPER ---
+        function speakText(text) {
+            // Funktion für Sprachausgabe
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'de-DE';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
 
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -284,7 +246,6 @@
                 result.push(sentencePool[randomIndex]);
                 sentencePool.splice(randomIndex, 1);
             }
-
             let wordPool = [...WORD_POOL_WORDS];
             let numWords = totalCount - result.length;
             for (let i = 0; i < numWords; i++) {
@@ -298,18 +259,13 @@
 
         function calculateFontSize(text) {
             const length = text.length;
-            if (length <= 10) return '5rem';
-            if (length >= MAX_WORD_LENGTH) return '1.5rem';
-            const minSize = 1.5; const maxSize = 5.0; const sizeRange = maxSize - minSize; const lengthRange = MAX_WORD_LENGTH - 10; 
-            const calculatedSize = maxSize - (sizeRange / lengthRange) * (length - 10);
-            return `${calculatedSize.toFixed(2)}rem`;
+            if (length <= 7) return '15vw'; 
+            if (length <= 15) return '10vw';
+            return '6vw'; 
         }
 
-        // --- BROWSER API INITIALISIERUNG ---
         function initRecognition() {
-            if (!SpeechRecognition) {
-                return null;
-            }
+            if (!SpeechRecognition) return null;
             const rec = new SpeechRecognition();
             rec.lang = 'de-DE';
             rec.continuous = false; 
@@ -319,8 +275,7 @@
         
         recognition = initRecognition();
 
-        // --- HAUPTFUNKTIONEN ---
-
+        // --- CORE LOGIC ---
         function loadWords() {
             currentWordIndex = 0;
             capturedWords = generateCombinedWords(TOTAL_WORDS_COUNT, SENTENCES_REQUIRED);
@@ -331,83 +286,75 @@
                     const span = document.createElement('span');
                     span.textContent = word;
                     span.style.fontSize = calculateFontSize(word); 
+                    span.style.display = 'none'; 
                     wordDisplay.appendChild(span);
                 });
                 spans = wordDisplay.querySelectorAll('span');
 
-                initialMessage.textContent = 'Bereit zur Anzeige der 10 Worte.';
-                initialMessage.classList.remove('feedback-correct', 'feedback-incorrect');
-                initialMessage.style.color = '#00FF00'; 
+                initialMessage.textContent = ''; // Leer am Anfang
                 
                 startButton.disabled = false;
                 readButton.disabled = true; 
+                
                 nextWordButton.textContent = 'Nächstes Wort (0/10)';
                 nextWordButton.removeEventListener('click', restartSequence);
                 nextWordButton.addEventListener('click', showNextWord);
-
+                nextWordButton.disabled = true; // Erst aktiv nach Start
             } else {
-                initialMessage.textContent = 'Fehler: Liste konnte nicht generiert werden.';
-                startButton.disabled = true;
+                initialMessage.textContent = 'Fehler beim Laden.';
             }
-        }
-        
-        // --- LOGIK FÜR SPRACHABGLEICH ---
-
-        function startReadingHandler() {
-             if (isRecording) {
-                 stopReading();
-             } else {
-                 startReading();
-             }
         }
 
         function startReading() {
             if (!recognition) {
-                initialMessage.textContent = 'Fehler: Spracherkennung nicht verfügbar.';
-                initialMessage.classList.add('feedback-incorrect');
-                initialMessage.style.display = 'block';
+                initialMessage.textContent = '❌';
+                speakText("Mikrofon Fehler");
                 return;
             }
             
             readButton.classList.add('recording');
-            readButton.textContent = "🔴 AUFNAHME LÄUFT. KLICKEN, UM ZU BEENDEN.";
+            readButton.textContent = "⏹ Aufnahme stoppen";
             readButton.disabled = false; 
             startButton.disabled = true;
             nextWordButton.disabled = true; 
             isRecording = true;
+            initialMessage.textContent = '👂'; // Ohr-Symbol für "Zuhören"
             
             recognition.onresult = checkReading;
             recognition.onerror = (event) => {
                  readButton.classList.remove('recording');
-                 readButton.textContent = "Ich lese laut vor. War das richtig?";
-                 readButton.disabled = true;
+                 readButton.textContent = "🎤 Laut vorlesen";
                  isRecording = false;
                  
                  if (event.error !== 'no-speech') {
-                     initialMessage.textContent = `❌ Aufnahme-Fehler: ${event.error}. Bitte erneut versuchen.`;
-                     initialMessage.classList.add('feedback-incorrect');
-                     initialMessage.style.display = 'block';
+                     initialMessage.textContent = '❌';
+                     speakText("Fehler");
                  }
-                 
-                 if (currentWordIndex < capturedWords.length) {
-                     nextWordButton.disabled = false; 
-                 }
+                 if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
+            };
+            recognition.onend = () => {
+                if(isRecording) { 
+                    readButton.classList.remove('recording');
+                    readButton.textContent = "🎤 Laut vorlesen";
+                    isRecording = false;
+                }
             };
             
             recognition.start();
-            initialMessage.style.display = 'none';
         }
 
         function stopReading() {
-            if (isRecording) {
+            if (isRecording && recognition) {
                 recognition.stop();
                 isRecording = false;
+                readButton.classList.remove('recording');
+                readButton.textContent = "🎤 Laut vorlesen";
             }
         }
 
         function checkReading(event) {
             readButton.classList.remove('recording');
-            readButton.textContent = "Ich lese laut vor. War das richtig?";
+            readButton.textContent = "🎤 Laut vorlesen";
             readButton.disabled = true;
             isRecording = false;
             
@@ -420,46 +367,31 @@
                  recognizedText = event.results[0][0].transcript.toLowerCase().trim();
             }
 
-            // --- ABGLEICH LOGIK ---
-            if (recognizedText.includes(currentTargetWord)) {
-                isCorrect = true;
-            } else if (currentTargetWord.length > 0 && recognizedText.includes(currentTargetWord.substring(0, Math.min(currentTargetWord.length, 4)))) {
-                 isCorrect = true;
-            } else if (recognizedText.length > 0 && currentTargetWord.includes(recognizedText)) {
-                isCorrect = true;
-            }
-
-
-            // Visuelles Feedback
-            currentSpan.classList.remove('correct', 'incorrect');
-            initialMessage.classList.remove('feedback-correct', 'feedback-incorrect');
+            if (recognizedText.includes(currentTargetWord)) isCorrect = true;
+            else if (currentTargetWord.length > 0 && recognizedText.includes(currentTargetWord.substring(0, 4))) isCorrect = true;
+            else if (recognizedText.length > 0 && currentTargetWord.includes(recognizedText)) isCorrect = true;
 
             if (isCorrect) {
-                currentSpan.classList.add('correct');
-                initialMessage.textContent = "✅ Übertragung erfolgreich! Sehr gut gelesen.";
-                initialMessage.classList.add('feedback-correct');
+                initialMessage.textContent = "✅";
+                speakText("Richtig!");
             } else {
-                currentSpan.classList.add('incorrect');
-                initialMessage.textContent = `❌ Dekodierungsfehler. Erkannt: "${recognizedText}"`;
-                initialMessage.classList.add('feedback-incorrect');
+                initialMessage.textContent = "❌";
+                speakText("Leider falsch.");
             }
             
-            initialMessage.style.display = 'block';
-
-            // WICHTIG: Reaktivierung des NEXT WORD Buttons nach erfolgreicher Prüfung
-            if (currentWordIndex <= capturedWords.length) { 
-                nextWordButton.disabled = false; 
-            }
+            // Reaktiviert den Weiter-Button
+            if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false; 
         }
 
-
-        // --- STEUERUNG & FLUSS ---
-
         function restartSequence() {
-            initialMessage.style.display = 'block';
-            wordDisplay.style.opacity = 0;
-            
+            initialMessage.textContent = '';
             loadWords(); 
+            // Nach Neustart direkt das erste Wort anzeigen?
+            // Nein, Logik verlangt erneuten Klick auf Start oder manuelle Steuerung.
+            // Um Konsistenz zu wahren, setzen wir den UI Status zurück.
+            startButton.disabled = false;
+            startButton.style.display = 'block'; // Falls ausgeblendet
+            nextWordButton.disabled = true;
         }
 
         function showWordDisplayArea() {
@@ -469,16 +401,13 @@
             }, { once: true });
             
             wordDisplayArea.style.display = 'flex'; 
-            fixedControlButtons.style.opacity = 1; 
-            
             loadWords(); 
         }
 
         function startDisplaySequence() {
             startButton.disabled = true;
+            startButton.style.display = 'none'; // Button weg, um Platz zu sparen
             readButton.disabled = false; 
-            initialMessage.style.display = 'none'; 
-            wordDisplay.style.opacity = 1; 
             showNextWord();
         }
 
@@ -487,44 +416,42 @@
 
             if (currentWordIndex > 0) {
                 const prevSpan = spans[currentWordIndex - 1];
-                prevSpan.style.opacity = 0;
-                prevSpan.classList.remove('correct', 'incorrect');
+                prevSpan.style.display = 'none'; 
             }
             
-            initialMessage.classList.remove('feedback-correct', 'feedback-incorrect');
-            initialMessage.style.display = 'none';
+            initialMessage.textContent = ''; // Feedback leeren
 
             if (currentWordIndex < capturedWords.length) {
-                spans[currentWordIndex].style.opacity = 1; 
-                currentWordIndex++; 
+                const currentSpan = spans[currentWordIndex];
+                currentSpan.style.display = 'block'; 
                 
+                currentWordIndex++; 
                 readButton.disabled = false; 
                 nextWordButton.disabled = true; 
-                nextWordButton.textContent = `Nächstes Wort (${currentWordIndex}/${capturedWords.length})`;
+                nextWordButton.textContent = `Nächstes (${currentWordIndex}/${capturedWords.length})`;
 
                 if (currentWordIndex === capturedWords.length) {
-                    
-                    nextWordButton.textContent = 'Sequenz beendet';
-                    nextWordButton.disabled = true; 
-                    readButton.disabled = false;
-                    
-                    setTimeout(() => {
-                        // Nach der finalen Prüfung wird der Button auf Neustart umgestellt
-                        if (nextWordButton.textContent === 'Sequenz beendet') {
-                            nextWordButton.disabled = true;
-                        }
-                        
-                    }, 100); 
+                    nextWordButton.textContent = 'Fertig';
                 }
             } else {
-                nextWordButton.disabled = true;
+                // Sequenz Ende
+                initialMessage.textContent = '🏁';
+                speakText("Protokoll abgeschlossen.");
+                
+                nextWordButton.textContent = 'Neustart';
+                nextWordButton.removeEventListener('click', showNextWord);
+                nextWordButton.addEventListener('click', restartSequence);
+                nextWordButton.disabled = false;
+                
+                readButton.disabled = true;
             }
         }
 
-        // --- Event Listener Registrierung ---
-
+        // --- EVENT LISTENER ---
         playVideoButton.addEventListener('click', () => {
-            videoElement.play();
+            videoElement.play().catch(e => {
+                showWordDisplayArea();
+            });
             playVideoButton.disabled = true;
             skipToReadButton.disabled = true;
             videoElement.addEventListener('ended', showWordDisplayArea, { once: true });
@@ -537,8 +464,11 @@
         });
 
         startButton.addEventListener('click', startDisplaySequence);
-        readButton.addEventListener('click', startReadingHandler); 
-    </script>
+        readButton.addEventListener('click', () => {
+             if (isRecording) stopReading();
+             else startReading();
+        });
 
+    </script>
 </body>
 </html>
