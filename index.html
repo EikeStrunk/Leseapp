@@ -5,15 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Borg Protokoll</title>
     <style>
+        /* --- HINTERGRUND FIX --- */
+        /* Wir nehmen den Hintergrund aus dem Body raus und geben ihm ein eigenes Element */
+        #bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: url('borg.png') no-repeat center center;
+            background-size: cover;
+            z-index: -1; /* Zwingend ganz nach hinten */
+            pointer-events: none;
+        }
+
         body {
             font-family: 'Courier New', monospace;
             margin: 0;
             height: 100vh;
             width: 100vw;
             overflow: hidden;
-            /* GEÄNDERT: 'fixed' entfernt für bessere iOS Kompatibilität */
-            background: url('borg.png') no-repeat center center;
-            background-size: cover; 
+            /* Hintergrund hier entfernt, siehe #bg-layer */
             color: #C0C0C0;
             display: flex;
             flex-direction: column;
@@ -88,6 +100,7 @@
             width: 100%;
             height: 100%;
             position: relative;
+            z-index: 10; /* Sicherstellen, dass Inhalt über dem BG liegt */
         }
 
         .screen-container {
@@ -169,6 +182,8 @@
 </head>
 <body>
     
+    <div id="bg-layer"></div>
+
     <div id="videoIntroScreen">
         <h2>Zielsystem Scan</h2>
         <video id="videoElement" src="your_video.mp4" controls playsinline preload="auto"></video>
@@ -217,12 +232,23 @@
         let spans = [];
 
         // --- HELPER ---
+
+        // NEU: Audio "aufwärmen" für iOS
+        function unlockAudio() {
+            if ('speechSynthesis' in window) {
+                const emptyUtterance = new SpeechSynthesisUtterance("");
+                window.speechSynthesis.speak(emptyUtterance);
+                console.log("Audio Unlocked for iOS");
+            }
+        }
+
         function speakText(text) {
             if ('speechSynthesis' in window) {
                 // Audio Feedback abbrechen, falls noch etwas spricht
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'de-DE';
+                utterance.rate = 1.0; // Normale Geschwindigkeit
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -315,7 +341,6 @@
             readButton.disabled = false; 
             startButton.disabled = true;
             
-            // WICHTIG: "Nächstes Wort" deaktivieren während Aufnahme, um Konflikte zu vermeiden
             nextWordButton.disabled = true; 
             
             isRecording = true;
@@ -329,7 +354,6 @@
                  
                  if (event.error !== 'no-speech') {
                      initialMessage.textContent = '❌';
-                     // speakText("Fehler");
                  }
                  // Fehler -> Button wieder freigeben
                  if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
@@ -354,7 +378,6 @@
                 isRecording = false;
                 readButton.classList.remove('recording');
                 readButton.textContent = "🎤 Laut vorlesen";
-                // Bei manuellem Stopp Button freigeben
                 if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
             }
         }
@@ -362,7 +385,7 @@
         function checkReading(event) {
             readButton.classList.remove('recording');
             readButton.textContent = "🎤 Laut vorlesen";
-            readButton.disabled = true; // Button kurz deaktivieren bis zum nächsten Wort
+            readButton.disabled = true; 
             isRecording = false;
             
             const currentSpan = spans[currentWordIndex - 1]; 
@@ -381,6 +404,7 @@
             currentSpan.classList.remove('correct', 'incorrect');
             initialMessage.classList.remove('feedback-correct', 'feedback-incorrect');
 
+            // Hier wird die Sprachausgabe ausgelöst (funktioniert nur, wenn vorher unlockAudio lief)
             if (isCorrect) {
                 initialMessage.textContent = "✅";
                 speakText("Richtig!");
@@ -392,9 +416,8 @@
             }
             initialMessage.style.display = 'block';
 
-            // GEÄNDERT: Weiter-Button immer aktivieren nach Prüfung
             if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false; 
-            readButton.disabled = false; // Wieder freigeben für erneuten Versuch
+            readButton.disabled = false; 
         }
 
         function restartSequence() {
@@ -406,7 +429,9 @@
         }
 
         function showWordDisplayArea() {
-            // Video stoppen, falls es läuft
+            // FIX: Hier Audio für iOS freischalten, da dies ein User-Klick ist
+            unlockAudio();
+
             videoElement.pause();
             
             videoIntroScreen.classList.add('hidden');
@@ -419,6 +444,9 @@
         }
 
         function startDisplaySequence() {
+            // FIX: Hier sicherheitshalber nochmal Audio freischalten
+            unlockAudio();
+
             startButton.disabled = true;
             startButton.style.display = 'none'; 
             readButton.disabled = false; 
@@ -426,7 +454,6 @@
         }
 
         function showNextWord() {
-            // Falls noch Aufnahme läuft, abbrechen
             if (isRecording) stopReading();
 
             if (currentWordIndex > 0) {
@@ -443,7 +470,6 @@
                 currentWordIndex++; 
                 readButton.disabled = false; 
                 
-                // GEÄNDERT: Button sofort aktivieren!
                 nextWordButton.disabled = false; 
                 nextWordButton.textContent = `Nächstes (${currentWordIndex}/${capturedWords.length})`;
 
@@ -451,15 +477,13 @@
                     nextWordButton.textContent = 'Beenden';
                 }
             } else {
-                // Sequenz Ende
                 initialMessage.textContent = '🏁';
                 speakText("Protokoll abgeschlossen.");
                 
-                // GEÄNDERT: Button auf Neustart setzen
                 nextWordButton.textContent = 'Neustart';
                 nextWordButton.removeEventListener('click', showNextWord);
                 nextWordButton.addEventListener('click', restartSequence);
-                nextWordButton.disabled = false;
+                nextWordButton.disabled = false; 
                 
                 readButton.disabled = true;
             }
@@ -467,23 +491,24 @@
 
         // --- EVENT LISTENER ---
         playVideoButton.addEventListener('click', () => {
+            // Auch hier Audio Unlock
+            unlockAudio();
             videoElement.play().catch(e => {
                 showWordDisplayArea();
             });
             playVideoButton.disabled = true;
-            // GEÄNDERT: Direkt-Button bleibt klickbar (siehe nächste Zeile)
-            // skipToReadButton.disabled = true; <-- ENTFERNT
             videoElement.addEventListener('ended', showWordDisplayArea, { once: true });
         });
 
         skipToReadButton.addEventListener('click', () => {
-             // Stoppt Video und wechselt
              showWordDisplayArea();
         });
 
         startButton.addEventListener('click', startDisplaySequence);
         
         readButton.addEventListener('click', () => {
+             // Letzter Check auf Audio Unlock, falls User sehr schnell war
+             unlockAudio();
              if (isRecording) stopReading();
              else startReading();
         });
