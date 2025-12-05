@@ -11,10 +11,9 @@
             height: 100vh;
             width: 100vw;
             overflow: hidden;
-            background: url('borg.png') no-repeat center center fixed;
-            /* GEÄNDERT: Zeigt so viel wie möglich vom Bild, ohne zu verzerren */
+            /* GEÄNDERT: 'fixed' entfernt für bessere iOS Kompatibilität */
+            background: url('borg.png') no-repeat center center;
             background-size: cover; 
-            background-position: center;
             color: #C0C0C0;
             display: flex;
             flex-direction: column;
@@ -123,21 +122,19 @@
         /* --- FEEDBACK (Haken/Kreuz) --- */
         #initialMessage {
             position: absolute;
-            /* Positioniert zwischen Wort und Buttons */
             bottom: 0; 
             width: 100%;
-            /* GEÄNDERT: Sehr große Schrift für Emojis */
             font-size: 4rem; 
             text-align: center;
             padding: 10px;
             box-sizing: border-box;
             text-shadow: 0 0 20px rgba(0,0,0,0.8);
+            pointer-events: none; /* Klicks gehen durch */
         }
 
         /* --- BUTTONS UNTEN --- */
         .control-buttons {
             position: absolute; 
-            /* GEÄNDERT: Deutlich mehr Abstand nach unten für iPhone Home-Bar */
             bottom: 100px; 
             width: 90%;
             display: flex;
@@ -221,8 +218,9 @@
 
         // --- HELPER ---
         function speakText(text) {
-            // Funktion für Sprachausgabe
             if ('speechSynthesis' in window) {
+                // Audio Feedback abbrechen, falls noch etwas spricht
+                window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'de-DE';
                 window.speechSynthesis.speak(utterance);
@@ -291,7 +289,7 @@
                 });
                 spans = wordDisplay.querySelectorAll('span');
 
-                initialMessage.textContent = ''; // Leer am Anfang
+                initialMessage.textContent = ''; 
                 
                 startButton.disabled = false;
                 readButton.disabled = true; 
@@ -299,7 +297,7 @@
                 nextWordButton.textContent = 'Nächstes Wort (0/10)';
                 nextWordButton.removeEventListener('click', restartSequence);
                 nextWordButton.addEventListener('click', showNextWord);
-                nextWordButton.disabled = true; // Erst aktiv nach Start
+                nextWordButton.disabled = true; 
             } else {
                 initialMessage.textContent = 'Fehler beim Laden.';
             }
@@ -316,9 +314,12 @@
             readButton.textContent = "⏹ Aufnahme stoppen";
             readButton.disabled = false; 
             startButton.disabled = true;
+            
+            // WICHTIG: "Nächstes Wort" deaktivieren während Aufnahme, um Konflikte zu vermeiden
             nextWordButton.disabled = true; 
+            
             isRecording = true;
-            initialMessage.textContent = '👂'; // Ohr-Symbol für "Zuhören"
+            initialMessage.textContent = '👂'; 
             
             recognition.onresult = checkReading;
             recognition.onerror = (event) => {
@@ -328,8 +329,9 @@
                  
                  if (event.error !== 'no-speech') {
                      initialMessage.textContent = '❌';
-                     speakText("Fehler");
+                     // speakText("Fehler");
                  }
+                 // Fehler -> Button wieder freigeben
                  if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
             };
             recognition.onend = () => {
@@ -337,10 +339,13 @@
                     readButton.classList.remove('recording');
                     readButton.textContent = "🎤 Laut vorlesen";
                     isRecording = false;
+                    // Falls Aufnahme endet ohne Ergebnis, Button freigeben
+                    if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
                 }
             };
             
             recognition.start();
+            initialMessage.textContent = '👂'; // Visuelles Signal
         }
 
         function stopReading() {
@@ -349,13 +354,15 @@
                 isRecording = false;
                 readButton.classList.remove('recording');
                 readButton.textContent = "🎤 Laut vorlesen";
+                // Bei manuellem Stopp Button freigeben
+                if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false;
             }
         }
 
         function checkReading(event) {
             readButton.classList.remove('recording');
             readButton.textContent = "🎤 Laut vorlesen";
-            readButton.disabled = true;
+            readButton.disabled = true; // Button kurz deaktivieren bis zum nächsten Wort
             isRecording = false;
             
             const currentSpan = spans[currentWordIndex - 1]; 
@@ -371,30 +378,37 @@
             else if (currentTargetWord.length > 0 && recognizedText.includes(currentTargetWord.substring(0, 4))) isCorrect = true;
             else if (recognizedText.length > 0 && currentTargetWord.includes(recognizedText)) isCorrect = true;
 
+            currentSpan.classList.remove('correct', 'incorrect');
+            initialMessage.classList.remove('feedback-correct', 'feedback-incorrect');
+
             if (isCorrect) {
                 initialMessage.textContent = "✅";
                 speakText("Richtig!");
+                initialMessage.classList.add('feedback-correct');
             } else {
                 initialMessage.textContent = "❌";
                 speakText("Leider falsch.");
+                initialMessage.classList.add('feedback-incorrect');
             }
-            
-            // Reaktiviert den Weiter-Button
+            initialMessage.style.display = 'block';
+
+            // GEÄNDERT: Weiter-Button immer aktivieren nach Prüfung
             if (currentWordIndex <= capturedWords.length) nextWordButton.disabled = false; 
+            readButton.disabled = false; // Wieder freigeben für erneuten Versuch
         }
 
         function restartSequence() {
             initialMessage.textContent = '';
             loadWords(); 
-            // Nach Neustart direkt das erste Wort anzeigen?
-            // Nein, Logik verlangt erneuten Klick auf Start oder manuelle Steuerung.
-            // Um Konsistenz zu wahren, setzen wir den UI Status zurück.
             startButton.disabled = false;
-            startButton.style.display = 'block'; // Falls ausgeblendet
+            startButton.style.display = 'block'; 
             nextWordButton.disabled = true;
         }
 
         function showWordDisplayArea() {
+            // Video stoppen, falls es läuft
+            videoElement.pause();
+            
             videoIntroScreen.classList.add('hidden');
             videoIntroScreen.addEventListener('transitionend', () => {
                 videoIntroScreen.style.display = 'none';
@@ -406,20 +420,21 @@
 
         function startDisplaySequence() {
             startButton.disabled = true;
-            startButton.style.display = 'none'; // Button weg, um Platz zu sparen
+            startButton.style.display = 'none'; 
             readButton.disabled = false; 
             showNextWord();
         }
 
         function showNextWord() {
-            stopReading();
+            // Falls noch Aufnahme läuft, abbrechen
+            if (isRecording) stopReading();
 
             if (currentWordIndex > 0) {
                 const prevSpan = spans[currentWordIndex - 1];
                 prevSpan.style.display = 'none'; 
             }
             
-            initialMessage.textContent = ''; // Feedback leeren
+            initialMessage.textContent = ''; 
 
             if (currentWordIndex < capturedWords.length) {
                 const currentSpan = spans[currentWordIndex];
@@ -427,17 +442,20 @@
                 
                 currentWordIndex++; 
                 readButton.disabled = false; 
-                nextWordButton.disabled = true; 
+                
+                // GEÄNDERT: Button sofort aktivieren!
+                nextWordButton.disabled = false; 
                 nextWordButton.textContent = `Nächstes (${currentWordIndex}/${capturedWords.length})`;
 
                 if (currentWordIndex === capturedWords.length) {
-                    nextWordButton.textContent = 'Fertig';
+                    nextWordButton.textContent = 'Beenden';
                 }
             } else {
                 // Sequenz Ende
                 initialMessage.textContent = '🏁';
                 speakText("Protokoll abgeschlossen.");
                 
+                // GEÄNDERT: Button auf Neustart setzen
                 nextWordButton.textContent = 'Neustart';
                 nextWordButton.removeEventListener('click', showNextWord);
                 nextWordButton.addEventListener('click', restartSequence);
@@ -453,17 +471,18 @@
                 showWordDisplayArea();
             });
             playVideoButton.disabled = true;
-            skipToReadButton.disabled = true;
+            // GEÄNDERT: Direkt-Button bleibt klickbar (siehe nächste Zeile)
+            // skipToReadButton.disabled = true; <-- ENTFERNT
             videoElement.addEventListener('ended', showWordDisplayArea, { once: true });
         });
 
         skipToReadButton.addEventListener('click', () => {
-             playVideoButton.disabled = true;
-             skipToReadButton.disabled = true;
+             // Stoppt Video und wechselt
              showWordDisplayArea();
         });
 
         startButton.addEventListener('click', startDisplaySequence);
+        
         readButton.addEventListener('click', () => {
              if (isRecording) stopReading();
              else startReading();
