@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Borg Protokoll</title>
 
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -13,20 +13,28 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <style>
-        /* --- GRUNDLAGEN & HINTERGRUND FIX --- */
+        /* --- HINTERGRUND FIX --- */
+        /* Wir nutzen einen eigenen Layer für das Bild, damit es garantiert HINTER allem anderen liegt */
+        #bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black url('Borg.png') no-repeat center center;
+            /* 'cover' sorgt dafür, dass der Screen komplett gefüllt ist */
+            background-size: cover; 
+            z-index: -1; /* Zwingend ganz nach hinten */
+            pointer-events: none;
+        }
+
         body {
             font-family: 'Courier New', monospace;
             margin: 0;
             height: 100vh;
             width: 100vw;
             overflow: hidden;
-            
-            /* ÄNDERUNG 1: Dateiname angepasst (Borg.png) und schwarzer Hintergrund als Fallback */
-            background: black url('Borg.png') no-repeat center center fixed;
-            
-            /* ÄNDERUNG 2: Rauszoomen auf 80% der Bildschirmgröße */
-            background-size: 80%;
-            
+            /* Hintergrund ist jetzt im #bg-layer, nicht mehr im Body */
             color: #C0C0C0;
             display: flex;
             flex-direction: column;
@@ -45,8 +53,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            /* Leicht transparent, damit man den Borg-Hintergrund erahnen kann */
-            background-color: rgba(0, 0, 0, 0.85);
+            /* Leicht transparent, damit man den Hintergrund erahnen kann */
+            background-color: rgba(0, 0, 0, 0.90);
             z-index: 100;
             text-align: center;
             padding: 20px;
@@ -137,7 +145,6 @@
         /* --- FEEDBACK (Haken/Kreuz) --- */
         #initialMessage {
             position: absolute;
-            /* ÄNDERUNG 3: Nach oben verschoben, damit es nicht von Buttons verdeckt wird */
             bottom: 250px; 
             width: 100%;
             font-size: 4rem; 
@@ -188,6 +195,8 @@
 </head>
 <body>
     
+    <div id="bg-layer"></div>
+
     <div id="videoIntroScreen">
         <h2>Zielsystem Scan</h2>
         <video id="videoElement" src="your_video.mp4" controls playsinline preload="auto"></video>
